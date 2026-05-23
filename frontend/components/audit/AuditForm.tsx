@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm, FormProvider, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -80,14 +79,14 @@ export function AuditForm() {
   });
 
   // Auto-save form state to Zustand store on every change
-  useEffect(() => {
-    const subscription = methods.watch((values) => {
-      if (values.tools) {
-        useAuditStore.setState({ tools: values.tools as ToolEntry[] });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [methods]);
+  // Using onChange event on the form element avoids the React Compiler
+  // incompatible-library warning from methods.watch()
+  const syncToStore = () => {
+    const values = methods.getValues();
+    if (values.tools) {
+      useAuditStore.setState({ tools: values.tools as ToolEntry[] });
+    }
+  };
 
   const onSubmit = async (data: AuditFormInput) => {
     const result = runAudit(data.tools);
@@ -123,7 +122,7 @@ export function AuditForm() {
         </div>
 
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+          <form onSubmit={methods.handleSubmit(onSubmit)} onChange={syncToStore} noValidate>
             {/* Tool entries */}
             <div className="space-y-4 mb-6">
               {fields.map((field, index) => (

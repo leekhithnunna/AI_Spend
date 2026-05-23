@@ -26,11 +26,13 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Editor
+# Editor / IDE generated files
 .vscode/
 .idea/
 *.swp
 *.swo
+frontend/AGENTS.md
+frontend/CLAUDE.md
 
 # Vercel
 .vercel
@@ -38,3 +40,6 @@ Thumbs.db
 # TypeScript build info
 *.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
+
+# Assignment PDF (not part of the codebase)
+*.pdf
