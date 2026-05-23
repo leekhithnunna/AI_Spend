@@ -8,12 +8,14 @@ frontend/.next/
 frontend/out/
 frontend/build/
 
-# Environment variables — NEVER commit these
+# Environment variables — NEVER commit actual secrets
 .env
 .env.local
 .env.*.local
 frontend/.env.local
 frontend/.env.*.local
+# Keep the example file (no secrets in it)
+!frontend/.env.local.example
 
 # Debug logs
 npm-debug.log*
