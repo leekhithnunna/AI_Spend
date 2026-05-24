@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   TrendingDown,
   CheckCircle2,
@@ -9,6 +11,10 @@ import {
   RotateCcw,
   ArrowRight,
 } from "lucide-react";
+import {
+  HIGH_SAVINGS_ANNUAL_THRESHOLD,
+  HIGH_SAVINGS_MONTHLY_THRESHOLD,
+} from "@/config/tools";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -223,9 +229,19 @@ function ToolBreakdown({ breakdown }: { breakdown: ToolAuditResult }) {
 
 // ── Main results component ───────────────────────────────────
 export function AuditResults() {
+  const router = useRouter();
   const { auditResult, showResults, resetAudit } = useAuditStore();
 
   if (!showResults || !auditResult) return null;
+
+  const showCredexCta =
+    auditResult.totalAnnualSavings >= HIGH_SAVINGS_ANNUAL_THRESHOLD ||
+    auditResult.totalMonthlySavings >= HIGH_SAVINGS_MONTHLY_THRESHOLD;
+
+  const handleReset = () => {
+    resetAudit();
+    router.push("/audit");
+  };
 
   return (
     <section id="audit-results" className="py-16 px-4">
@@ -239,7 +255,7 @@ export function AuditResults() {
               {auditResult.toolBreakdowns.length !== 1 ? "s" : ""} audited
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={resetAudit}>
+          <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw className="h-3.5 w-3.5" />
             Start Over
           </Button>
@@ -277,24 +293,38 @@ export function AuditResults() {
           </div>
         </div>
 
-        {/* CTA */}
-        {auditResult.totalAnnualSavings > 0 && (
-          <div className="mt-10 rounded-xl border border-violet-500/20 bg-violet-500/10 p-6 text-center">
+        {showCredexCta && (
+          <div className="mt-10 rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 to-indigo-600/10 p-6 sm:p-8 text-center">
             <p className="text-lg font-semibold text-white mb-1">
-              Want help implementing these changes?
+              You could save {formatCurrency(auditResult.totalAnnualSavings)}/year
             </p>
-            <p className="text-white/50 text-sm mb-4">
-              Credex can help your team optimize AI spend and build smarter workflows.
+            <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">
+              High-impact savings detected. Credex helps teams implement plan changes, optimize
+              API spend, and build cost-efficient AI workflows.
             </p>
             <a
               href="https://credex.in"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 h-10 px-5 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
+              className="inline-flex items-center gap-2 h-11 px-6 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-lg shadow-violet-500/25"
             >
-              Talk to Credex
+              Get help from Credex
               <ArrowRight className="h-4 w-4" />
             </a>
+          </div>
+        )}
+
+        {auditResult.totalAnnualSavings > 0 && !showCredexCta && (
+          <div className="mt-10 rounded-xl border border-white/10 bg-white/3 p-6 text-center">
+            <p className="text-sm text-white/50 mb-4">
+              Implement these changes in your billing dashboards to start saving.
+            </p>
+            <Link
+              href="/audit"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-5 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+            >
+              Edit audit inputs
+            </Link>
           </div>
         )}
       </div>
