@@ -11,9 +11,9 @@ const features = [
   },
   {
     icon: TrendingDown,
-    title: "Deterministic Rules",
+    title: "Real Pricing Data",
     description:
-      "Savings calculations are based on real pricing data and proven optimization patterns — not AI guesses.",
+      "Savings are based on published list prices with source links — not AI guesses or inflated estimates.",
     color: "text-emerald-400",
     bg: "bg-emerald-400/10",
   },
@@ -21,7 +21,7 @@ const features = [
     icon: BarChart3,
     title: "Per-Tool Breakdown",
     description:
-      "See exactly which subscriptions are costing you the most and get specific, actionable recommendations for each.",
+      "See exactly which subscriptions cost the most and get specific, actionable recommendations for each.",
     color: "text-violet-400",
     bg: "bg-violet-400/10",
   },
@@ -29,15 +29,15 @@ const features = [
     icon: Shield,
     title: "Privacy First",
     description:
-      "Your data never leaves your browser unless you choose to save it. No tracking, no data selling.",
+      "Your data stays in your browser unless you choose to save. No tracking, no data selling.",
     color: "text-blue-400",
     bg: "bg-blue-400/10",
   },
   {
     icon: Clock,
-    title: "Auto-Saved",
+    title: "Auto-Saved Progress",
     description:
-      "Your form data is automatically saved locally. Come back later and pick up right where you left off.",
+      "Form state persists in localStorage. Reload the page and pick up right where you left off.",
     color: "text-orange-400",
     bg: "bg-orange-400/10",
   },
@@ -45,7 +45,7 @@ const features = [
     icon: CheckCircle,
     title: "Honest Assessments",
     description:
-      "If your spend is already optimized, we'll tell you. No inflated savings numbers to make us look good.",
+      "If your spend is already optimized, we'll tell you. No fake savings numbers.",
     color: "text-pink-400",
     bg: "bg-pink-400/10",
   },
@@ -53,9 +53,8 @@ const features = [
 
 export function Features() {
   return (
-    <section className="py-24 px-4">
+    <section id="features" className="py-24 px-4 scroll-mt-20">
       <div className="max-w-6xl mx-auto">
-        {/* Section header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Built for real teams, not demos
@@ -65,14 +64,13 @@ export function Features() {
           </p>
         </div>
 
-        {/* Features grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <div
                 key={feature.title}
-                className="group rounded-xl border border-white/8 bg-white/3 p-6 hover:border-white/15 hover:bg-white/5 transition-all duration-200"
+                className="group rounded-xl border border-white/8 bg-white/3 p-6 hover:border-violet-500/30 hover:bg-white/5 transition-all duration-200"
               >
                 <div
                   className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${feature.bg} mb-4`}
