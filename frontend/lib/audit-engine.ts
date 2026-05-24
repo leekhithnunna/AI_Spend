@@ -2,7 +2,7 @@
  * AI Spend Audit Engine
  *
  * Deterministic, rule-based audit logic. No AI API calls.
- * All rules are hardcoded business logic — fast, free, transparent.
+ * Pricing reference data lives in config/pricing.ts.
  */
 
 import type {
@@ -11,63 +11,15 @@ import type {
   ToolAuditResult,
   Recommendation,
 } from "@/types/audit";
+import { getPlanPriceMap } from "@/config/pricing";
 import { generateId } from "@/lib/utils";
 
-// ============================================================
-// Plan pricing reference (monthly per seat, USD)
-// Used to calculate what the user SHOULD be paying
-// ============================================================
-const PLAN_PRICING: Record<string, Record<string, number>> = {
-  Cursor: {
-    Free: 0,
-    Pro: 20,
-    Business: 40,
-  },
-  "GitHub Copilot": {
-    Free: 0,
-    Pro: 10,
-    Business: 19,
-    Enterprise: 39,
-  },
-  Claude: {
-    Free: 0,
-    Pro: 20,
-    Team: 30,
-    Enterprise: 60,
-  },
-  ChatGPT: {
-    Free: 0,
-    Plus: 20,
-    Team: 30,
-    Enterprise: 60,
-  },
-  "Anthropic API": {
-    "API (Pay-as-you-go)": 0, // variable — use user-entered cost
-  },
-  "OpenAI API": {
-    "API (Pay-as-you-go)": 0, // variable — use user-entered cost
-  },
-  Gemini: {
-    Free: 0,
-    Pro: 20,
-    Business: 30,
-    Enterprise: 50,
-  },
-  Windsurf: {
-    Free: 0,
-    Pro: 15,
-    Team: 35,
-  },
-};
+const PLAN_PRICING = getPlanPriceMap();
 
-// ============================================================
-// Rule engine — returns recommendations for a single tool
-// ============================================================
 function auditTool(entry: ToolEntry): ToolAuditResult {
   const recommendations: Recommendation[] = [];
   let optimizedMonthlyCost = entry.monthlyCost;
 
-  // ── Rule 1: ChatGPT Team with ≤2 seats → downgrade to Plus ──
   if (entry.tool === "ChatGPT" && entry.plan === "Team" && entry.seats <= 2) {
     const plusCost = 20 * entry.seats;
     const savings = entry.monthlyCost - plusCost;
@@ -84,7 +36,6 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 2: Claude Team with ≤3 seats → downgrade to Pro ──
   if (entry.tool === "Claude" && entry.plan === "Team" && entry.seats <= 3) {
     const proCost = 20 * entry.seats;
     const savings = entry.monthlyCost - proCost;
@@ -101,7 +52,6 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 3: API spend > $500/mo → recommend Credex consultation ──
   if (
     (entry.tool === "Anthropic API" || entry.tool === "OpenAI API") &&
     entry.monthlyCost > 500
@@ -117,7 +67,6 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     optimizedMonthlyCost = Math.round(entry.monthlyCost * 0.65);
   }
 
-  // ── Rule 4: Enterprise plan with team size < 5 → recommend downgrade ──
   if (entry.plan === "Enterprise" && entry.teamSize < 5) {
     const teamPricing = PLAN_PRICING[entry.tool];
     const teamPlanCost = teamPricing?.Team
@@ -137,7 +86,27 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 5: Seats significantly exceed team size → reduce seats ──
+  const listedPrice = PLAN_PRICING[entry.tool]?.[entry.plan];
+  if (
+    listedPrice !== undefined &&
+    listedPrice > 0 &&
+    entry.monthlyCost > listedPrice * entry.seats * 1.15
+  ) {
+    const fairCost = listedPrice * entry.seats;
+    const savings = entry.monthlyCost - fairCost;
+    if (savings > 0 && !recommendations.some((r) => r.title.includes("Wrong plan"))) {
+      optimizedMonthlyCost = Math.min(optimizedMonthlyCost, fairCost);
+      recommendations.push({
+        id: generateId(),
+        severity: "warning",
+        title: `Wrong plan selection — ${entry.tool}`,
+        description: `You're paying ${formatUsd(entry.monthlyCost)}/mo but list price for ${entry.plan} is ~${formatUsd(fairCost)}/mo for ${entry.seats} seat(s). You may be on a legacy or mis-billed tier.`,
+        estimatedMonthlySavings: savings,
+        action: `Verify billing at ${entry.tool}'s pricing page and align to ${entry.plan}`,
+      });
+    }
+  }
+
   if (entry.seats > entry.teamSize * 1.2 && entry.seats > 1) {
     const unusedSeats = entry.seats - entry.teamSize;
     const costPerSeat = entry.monthlyCost / entry.seats;
@@ -158,7 +127,6 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 6: GitHub Copilot Business when Pro is enough (≤3 devs) ──
   if (
     entry.tool === "GitHub Copilot" &&
     entry.plan === "Business" &&
@@ -179,7 +147,6 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 7: Cursor Business for solo/pair → downgrade to Pro ──
   if (entry.tool === "Cursor" && entry.plan === "Business" && entry.seats <= 2) {
     const proCost = 20 * entry.seats;
     const savings = entry.monthlyCost - proCost;
@@ -196,7 +163,22 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     }
   }
 
-  // ── Rule 8: API spend between $100–$500 → suggest optimization ──
+  if (entry.tool === "Windsurf" && entry.plan === "Team" && entry.seats <= 2) {
+    const proCost = 15 * entry.seats;
+    const savings = entry.monthlyCost - proCost;
+    if (savings > 0) {
+      optimizedMonthlyCost = Math.min(optimizedMonthlyCost, proCost);
+      recommendations.push({
+        id: generateId(),
+        severity: "info",
+        title: "Downgrade Windsurf Team → Pro",
+        description: `With ${entry.seats} user(s), Windsurf Pro ($15/seat) is enough. Team adds shared admin you may not need yet.`,
+        estimatedMonthlySavings: savings,
+        action: "Review plans at windsurf.com/pricing",
+      });
+    }
+  }
+
   if (
     (entry.tool === "Anthropic API" || entry.tool === "OpenAI API") &&
     entry.monthlyCost >= 100 &&
@@ -224,8 +206,8 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
     recommendations.some((r) => r.severity === "critical")
       ? "warning"
       : monthlySavings > 0
-      ? "can-save"
-      : "optimized";
+        ? "can-save"
+        : "optimized";
 
   return {
     tool: entry.tool,
@@ -239,9 +221,14 @@ function auditTool(entry: ToolEntry): ToolAuditResult {
   };
 }
 
-// ============================================================
-// Main audit function — processes all tools
-// ============================================================
+function formatUsd(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export function runAudit(tools: ToolEntry[]): AuditResult {
   const toolBreakdowns = tools.map(auditTool);
 
@@ -255,7 +242,6 @@ export function runAudit(tools: ToolEntry[]): AuditResult {
   const savingsPercentage =
     totalMonthlyCost > 0 ? (totalMonthlySavings / totalMonthlyCost) * 100 : 0;
 
-  // Collect all recommendations, sorted by savings (highest first)
   const allRecommendations = toolBreakdowns
     .flatMap((r) => r.recommendations)
     .sort((a, b) => b.estimatedMonthlySavings - a.estimatedMonthlySavings);
@@ -264,8 +250,8 @@ export function runAudit(tools: ToolEntry[]): AuditResult {
     savingsPercentage > 20
       ? "overspending"
       : totalMonthlySavings > 0
-      ? "can-save"
-      : "optimized";
+        ? "can-save"
+        : "optimized";
 
   return {
     totalMonthlyCost,
