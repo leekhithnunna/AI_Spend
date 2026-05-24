@@ -12,11 +12,11 @@ Built for the **Credex WebDev 2026 Internship Assignment**.
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 15, TypeScript, Tailwind CSS |
-| UI Components | shadcn/ui, Lucide React |
-| Forms | React Hook Form + Zod |
-| State | Zustand + persist middleware |
-| Backend | Supabase (PostgreSQL) |
+| Frontend | Next.js 16, TypeScript, Tailwind CSS v4 |
+| UI Components | shadcn-style primitives, Lucide React |
+| Forms | React Hook Form + Zod (multi-step wizard) |
+| State | Zustand + persist middleware (localStorage) |
+| Backend | Supabase (PostgreSQL, optional) |
 | Deployment | Vercel |
 
 ---
@@ -25,18 +25,22 @@ Built for the **Credex WebDev 2026 Internship Assignment**.
 
 ```
 root/
-├── frontend/          # Next.js 15 app
-│   ├── app/           # App Router pages & layouts
-│   ├── components/    # Reusable UI components
-│   ├── lib/           # Utilities, audit engine, Supabase client
-│   ├── store/         # Zustand state management
-│   ├── types/         # TypeScript interfaces
-│   ├── styles/        # Global styles
-│   └── public/        # Static assets
+├── frontend/
+│   ├── app/                 # App Router: /, /audit, /results
+│   ├── components/
+│   │   ├── audit/           # Form, results, step indicator
+│   │   ├── landing/         # Hero, features, CTA, footer
+│   │   ├── layout/          # Nav, page shell
+│   │   └── ui/              # Button, Card, Input, etc.
+│   ├── config/              # Pricing data + tool constants
+│   ├── hooks/               # Store hydration helper
+│   ├── lib/                 # Audit engine, Supabase, utils
+│   ├── store/               # Zustand audit store
+│   └── types/               # TypeScript interfaces
 ├── backend/
-│   ├── supabase/      # Supabase config & migrations
-│   ├── sql/           # SQL schema files
-│   └── docs/          # Backend documentation
+│   ├── supabase/
+│   ├── sql/
+│   └── docs/
 ├── README.md
 ├── DEVLOG.md
 └── ARCHITECTURE.md
@@ -48,14 +52,13 @@ root/
 
 ### Prerequisites
 - Node.js 18+
-- npm or pnpm
-- Supabase account (free tier works)
+- npm
 
 ### 1. Clone & Install
 
 ```bash
-git clone <your-repo-url>
-cd frontend
+git clone https://github.com/leekhithnunna/AI_Spend.git
+cd AI_Spend/frontend
 npm install
 ```
 
@@ -63,7 +66,7 @@ npm install
 
 ```bash
 cp .env.local.example .env.local
-# Fill in your Supabase credentials
+# Optional: add Supabase credentials for audit persistence
 ```
 
 ### 3. Run Development Server
@@ -74,50 +77,54 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page (hero, features, CTA) |
+| `/audit` | Multi-step spend input form |
+| `/results` | Audit results & recommendations |
+
 ---
 
-## Supabase Setup
+## Supabase Setup (Optional)
 
 ```bash
-# 1. Create a new Supabase project at supabase.com
-# 2. Run the migration file
-# Go to Supabase Dashboard → SQL Editor
-# Paste contents of backend/sql/001_initial_schema.sql
-# Click Run
+# 1. Create a Supabase project at supabase.com
+# 2. Run backend/sql/001_initial_schema.sql in SQL Editor
+# 3. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local
 ```
 
 ---
 
 ## Deploy to Vercel
 
-```bash
-# Install Vercel CLI
-npm i -g vercel
+Deploy from the `frontend/` directory (see `frontend/vercel.json`).
 
-# Deploy from frontend directory
-cd frontend
-vercel
-
-# Set environment variables in Vercel dashboard:
-# NEXT_PUBLIC_SUPABASE_URL
-# NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
+Set environment variables in the Vercel dashboard:
+- `NEXT_PUBLIC_SUPABASE_URL` (optional)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (optional)
+- `NEXT_PUBLIC_APP_URL` (optional)
 
 ---
 
-## Day 1 Checklist
+## Progress
 
-- [x] Monorepo structure created
-- [x] Next.js 15 + TypeScript initialized
-- [x] Tailwind CSS + shadcn/ui configured
-- [x] Landing page with hero, features, form, footer
-- [x] Spend input form with validation
-- [x] Zustand persist middleware (survives refresh)
-- [x] Deterministic audit engine
-- [x] Results display with savings breakdown
-- [x] Supabase schema + migration file
-- [x] Environment variables setup
-- [x] Documentation files created
+### Day 1
+- [x] Monorepo structure, Next.js + TypeScript + Tailwind
+- [x] Landing page, spend form, audit engine, Zustand persistence
+- [x] Supabase schema, documentation
+
+### Day 2
+- [x] Product Hunt–quality responsive landing page
+- [x] Multi-step audit form (tools → plans → spend → team → review)
+- [x] Dynamic plans per tool + validation + add/remove tools
+- [x] Centralized pricing config with source URLs (`config/pricing.ts`)
+- [x] Audit engine rules (downgrades, enterprise warnings, wrong-plan detection)
+- [x] Dedicated results page with Credex CTA for high savings
+- [x] App routing: `/`, `/audit`, `/results`
+- [x] Loading/error states, localStorage reload persistence
+- [x] `.env.local.example`, updated docs
 
 ---
 
