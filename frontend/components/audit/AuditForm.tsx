@@ -96,7 +96,7 @@ export function AuditForm() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { tools: storedTools, setAuditResult, setShowResults } = useAuditStore();
+  const { tools: storedTools, setAuditResult, setAuditId, setShowResults } = useAuditStore();
 
   const methods = useForm<AuditFormInput>({
     resolver: zodResolver(auditFormSchema),
@@ -150,11 +150,15 @@ export function AuditForm() {
       setShowResults(true);
       syncToStore();
 
-      saveAudit({
+      const persistedId = await saveAudit({
         audit_data: { tools: data.tools, results: result },
         monthly_savings: result.totalMonthlySavings,
         annual_savings: result.totalAnnualSavings,
-      }).catch(() => {});
+      });
+
+      if (persistedId) {
+        setAuditId(persistedId);
+      }
 
       router.push("/results");
     } catch {

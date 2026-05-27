@@ -13,6 +13,8 @@ interface AuditStore {
   tools: ToolEntry[];
   // Results state
   auditResult: AuditResult | null;
+  // Persisted audit ID for shareable URLs
+  auditId: string | null;
   // Whether results are being shown
   showResults: boolean;
 
@@ -21,6 +23,7 @@ interface AuditStore {
   removeTool: (id: string) => void;
   updateTool: (id: string, updates: Partial<ToolEntry>) => void;
   setAuditResult: (result: AuditResult) => void;
+  setAuditId: (id: string | null) => void;
   setShowResults: (show: boolean) => void;
   resetAudit: () => void;
 }
@@ -40,6 +43,7 @@ export const useAuditStore = create<AuditStore>()(
     (set) => ({
       tools: [defaultTool()],
       auditResult: null,
+      auditId: null,
       showResults: false,
 
       addTool: () =>
@@ -62,12 +66,15 @@ export const useAuditStore = create<AuditStore>()(
       setAuditResult: (result) =>
         set({ auditResult: result, showResults: true }),
 
+      setAuditId: (id) => set({ auditId: id }),
+
       setShowResults: (show) => set({ showResults: show }),
 
       resetAudit: () =>
         set({
           tools: [defaultTool()],
           auditResult: null,
+          auditId: null,
           showResults: false,
         }),
     }),
@@ -77,6 +84,7 @@ export const useAuditStore = create<AuditStore>()(
       partialize: (state) => ({
         tools: state.tools,
         auditResult: state.auditResult,
+        auditId: state.auditId,
         showResults: state.showResults,
       }),
     }

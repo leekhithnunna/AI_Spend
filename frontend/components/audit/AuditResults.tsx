@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   TrendingDown,
@@ -228,15 +229,32 @@ function ToolBreakdown({ breakdown }: { breakdown: ToolAuditResult }) {
 }
 
 // ── Main results component ───────────────────────────────────
-export function AuditResults() {
+interface AuditResultsProps {
+  result?: AuditResult;
+  auditId?: string | null;
+}
+
+export function AuditResults({ result, auditId }: AuditResultsProps) {
   const router = useRouter();
   const { auditResult, showResults, resetAudit } = useAuditStore();
+  const [copied, setCopied] = useState(false);
 
-  if (!showResults || !auditResult) return null;
+  const displayResult = result ?? auditResult;
+  const showResultView = Boolean(result ?? (showResults && auditResult));
+
+  const shareUrl = auditId
+    ? typeof window !== "undefined"
+      ? `${window.location.origin}/results/${auditId}`
+      : ""
+    : typeof window !== "undefined"
+    ? window.location.href
+    : "";
+
+  if (!showResultView || !displayResult) return null;
 
   const showCredexCta =
-    auditResult.totalAnnualSavings >= HIGH_SAVINGS_ANNUAL_THRESHOLD ||
-    auditResult.totalMonthlySavings >= HIGH_SAVINGS_MONTHLY_THRESHOLD;
+    displayResult.totalAnnualSavings >= HIGH_SAVINGS_ANNUAL_THRESHOLD ||
+    displayResult.totalMonthlySavings >= HIGH_SAVINGS_MONTHLY_THRESHOLD;
 
   const handleReset = () => {
     resetAudit();
@@ -251,8 +269,8 @@ export function AuditResults() {
           <div>
             <h2 className="text-3xl font-bold text-white">Audit Results</h2>
             <p className="text-white/40 text-sm mt-1">
-              Based on {auditResult.toolBreakdowns.length} tool
-              {auditResult.toolBreakdowns.length !== 1 ? "s" : ""} audited
+              Based on {displayResult.toolBreakdowns.length} tool
+              {displayResult.toolBreakdowns.length !== 1 ? "s" : ""} audited
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleReset}>
@@ -262,19 +280,68 @@ export function AuditResults() {
         </div>
 
         {/* Status banner */}
-        <StatusBanner result={auditResult} />
+        <StatusBanner result={displayResult} />
+
+        <div className="mb-8 grid gap-4 sm:grid-cols-[1fr_auto] items-start">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+            <p className="text-sm text-white/60 mb-3">Audit summary</p>
+            <p className="text-base text-white/90 leading-7">
+              {displayResult.totalMonthlySavings > 0
+                ? `This audit finds ${formatCurrency(displayResult.totalMonthlySavings)} in monthly savings and ${formatCurrency(displayResult.totalAnnualSavings)} in annual savings across ${displayResult.toolBreakdowns.length} tool${displayResult.toolBreakdowns.length !== 1 ? "s" : ""}.`
+                : `Your current AI subscriptions appear optimized based on the entered team sizes and plan prices.`}
+            </p>
+            <p className="text-sm text-white/50 mt-3">
+              {displayResult.topRecommendations.length > 0
+                ? displayResult.topRecommendations[0].description
+                : "No major recommendations found — review your audit inputs for any optional tools or seat optimizations."}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+            <p className="text-sm text-white/60 mb-3">Shareable audit</p>
+            <p className="text-sm text-white/50 mb-4">
+              {auditId
+                ? "This link is backed by Supabase persistence and can be shared with your team."
+                : "Share will copy the current URL. To generate a permanent share link, configure Supabase and re-run the audit."}
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (!shareUrl) return;
+                  await navigator.clipboard.writeText(shareUrl);
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? "Copied" : "Copy share link"}
+              </Button>
+              {auditId && (
+                <a
+                  href={shareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+                >
+                  Open shared result
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Summary cards */}
-        <SummaryCards result={auditResult} />
+        <SummaryCards result={displayResult} />
 
         {/* Recommendations */}
-        {auditResult.topRecommendations.length > 0 && (
+        {displayResult.topRecommendations.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-white mb-4">
               Top Recommendations
             </h3>
             <div className="space-y-3">
-              {auditResult.topRecommendations.map((rec) => (
+              {displayResult.topRecommendations.map((rec) => (
                 <RecommendationCard key={rec.id} rec={rec} />
               ))}
             </div>
@@ -287,7 +354,7 @@ export function AuditResults() {
             Per-Tool Breakdown
           </h3>
           <div className="space-y-3">
-            {auditResult.toolBreakdowns.map((breakdown, i) => (
+            {displayResult.toolBreakdowns.map((breakdown, i) => (
               <ToolBreakdown key={i} breakdown={breakdown} />
             ))}
           </div>
@@ -296,7 +363,7 @@ export function AuditResults() {
         {showCredexCta && (
           <div className="mt-10 rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-600/20 to-indigo-600/10 p-6 sm:p-8 text-center">
             <p className="text-lg font-semibold text-white mb-1">
-              You could save {formatCurrency(auditResult.totalAnnualSavings)}/year
+              You could save {formatCurrency(displayResult.totalAnnualSavings)}/year
             </p>
             <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">
               High-impact savings detected. Credex helps teams implement plan changes, optimize
@@ -314,7 +381,7 @@ export function AuditResults() {
           </div>
         )}
 
-        {auditResult.totalAnnualSavings > 0 && !showCredexCta && (
+        {displayResult.totalAnnualSavings > 0 && !showCredexCta && (
           <div className="mt-10 rounded-xl border border-white/10 bg-white/3 p-6 text-center">
             <p className="text-sm text-white/50 mb-4">
               Implement these changes in your billing dashboards to start saving.
