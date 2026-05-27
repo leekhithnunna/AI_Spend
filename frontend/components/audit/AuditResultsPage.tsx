@@ -13,7 +13,7 @@ import { useStoreHydration } from "@/hooks/use-store-hydration";
 export function AuditResultsPage() {
   const router = useRouter();
   const hydrated = useStoreHydration();
-  const { auditResult, showResults } = useAuditStore();
+  const { auditResult, auditId, showResults } = useAuditStore();
 
   useEffect(() => {
     if (!hydrated) return;
@@ -43,5 +43,5 @@ export function AuditResultsPage() {
     );
   }
 
-  return <AuditResults />;
+  return <AuditResults auditId={auditId} />;
 }
