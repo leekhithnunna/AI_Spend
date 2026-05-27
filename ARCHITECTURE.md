@@ -67,7 +67,7 @@ frontend/
 2. Each change syncs to Zustand → localStorage (`ai-spend-audit`)
 3. Submit runs `runAudit()` using `config/pricing.ts` reference data
 4. Results stored in Zustand; router navigates to `/results`
-5. Optional: `saveAudit()` to Supabase
+5. Optional: `saveAudit()` to Supabase, with a persisted shared report route at `/results/[auditId]`
 
 ---
 

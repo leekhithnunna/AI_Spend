@@ -92,9 +92,25 @@ Shared `Nav` + `PageShell` components. Environment example at `frontend/.env.loc
 
 ---
 
-## Day 3 — (Upcoming)
+## Day 3 — May 27, 2026
 
-### Planned
-- [ ] Wire up Supabase save on form submit with error UI
-- [ ] Lead capture modal after audit
-- [ ] Export audit results as PDF
+### Goals
+- [x] Add persisted audit save with shareable results route
+- [x] Improve results dashboard with summary and share UI
+- [x] Add audit engine unit tests and CI validation
+- [x] Keep the MVP honest with optional Supabase persistence
+
+### What I Built
+
+**Saved Audit Sharing**
+Implemented Supabase-backed audit persistence and a public route at `/results/[auditId]` for shareable reports. The app gracefully falls back to local URL sharing if persistence is not configured.
+
+**Results Dashboard**
+Expanded the result experience with a summary panel, recommendations, and a share link button. Results remain stable across refreshes through Zustand persistence.
+
+**Testing & CI**
+Added five audit engine unit tests, `Vitest` configuration, and GitHub Actions workflow for build/lint/test validation.
+
+### Notes
+- Supabase is optional; app works without environment variables.
+- If service role keys are configured, saved reports can be shared via persistent URLs.

@@ -77,6 +77,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+### 4. Run Tests
+
+```bash
+npm test
+```
+
 ### Routes
 
 | Route | Description |
@@ -84,6 +90,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `/` | Landing page (hero, features, CTA) |
 | `/audit` | Multi-step spend input form |
 | `/results` | Audit results & recommendations |
+| `/results/[auditId]` | Shareable saved audit report (Supabase required) |
 
 ---
 
